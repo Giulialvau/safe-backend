@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fascicolo Tecnico EN 1090 — {{COMMESSA_CODICE}}</title>
+  <style>
+    @page { size: A4 portrait; margin: 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      color: #222;
+      line-height: 1.45;
+      margin: 0;
+    }
+    .ft-wrapper > .ft-block { page-break-before: always; }
+    .ft-wrapper > .ft-block:first-child { page-break-before: avoid; }
+    h1.doc-title { font-size: 16pt; color: #1e3a5f; margin: 0 0 8px; }
+    h2.sec-title {
+      font-size: 12pt;
+      color: #1e3a5f;
+      margin: 0 0 10px;
+      border-bottom: 2px solid #1e3a5f;
+      padding-bottom: 6px;
+    }
+    h3.sub-sec { font-size: 10.5pt; color: #333; margin: 12px 0 6px; }
+    table.data {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 12px;
+    }
+    table.data th,
+    table.data td {
+      border: 1px solid #bbb;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.data th { background: #eef2f6; font-weight: bold; width: 30%; }
+    table.grid {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 12px;
+      font-size: 8.5pt;
+    }
+    table.grid th,
+    table.grid td {
+      border: 1px solid #bbb;
+      padding: 4px 5px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.grid th { background: #eef2f6; }
+    .logo-placeholder {
+      width: 140px;
+      height: 56px;
+      border: 1px dashed #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8pt;
+      color: #666;
+      background: #f8f9fa;
+      margin: 0 auto 20px;
+    }
+    .cover-page {
+      min-height: 240mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .cover-page .main-title {
+      font-size: 22pt;
+      color: #1e3a5f;
+      margin: 16px 0 8px;
+    }
+    .cover-page .sub {
+      font-size: 11pt;
+      color: #444;
+      max-width: 420px;
+      margin-bottom: 28px;
+    }
+    .note { font-size: 9pt; color: #444; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="ft-wrapper">
+{{BODY}}
+  </div>
+</body>
+</html>

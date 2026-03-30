@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{DOC_TITLE}}</title>
+  <style>
+    @page { size: A4 portrait; margin: 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      color: #222;
+      line-height: 1.45;
+      margin: 0;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #1e3a5f;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    .logo-placeholder {
+      width: 120px;
+      height: 48px;
+      border: 1px dashed #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8pt;
+      color: #666;
+      background: #f8f9fa;
+    }
+    .header-meta { text-align: right; font-size: 8pt; color: #555; }
+    h1 { font-size: 16pt; color: #1e3a5f; margin: 0 0 8px; }
+    h2 { font-size: 12pt; color: #1e3a5f; margin: 18px 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    table.data { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
+    table.data th, table.data td {
+      border: 1px solid #bbb;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.data th { background: #eef2f6; font-weight: bold; width: 28%; }
+    table.grid { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 8.5pt; }
+    table.grid th, table.grid td { border: 1px solid #bbb; padding: 4px 5px; text-align: left; }
+    table.grid th { background: #eef2f6; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo-placeholder">Logo aziendale</div>
+    <div class="header-meta">Generato il {{GENERATO_IL}}<br/>Report tracciabilità — EN 1090</div>
+  </header>
+  <h1>{{DOC_TITLE}}</h1>
+  <h2>Dati commessa</h2>
+  <table class="data">
+    <tbody>
+      <tr><th>Codice</th><td>{{COMMESSA_CODICE}}</td></tr>
+      <tr><th>Cliente</th><td>{{COMMESSA_CLIENTE}}</td></tr>
+      <tr><th>Titolo</th><td>{{COMMESSA_TITOLO}}</td></tr>
+      <tr><th>Descrizione</th><td>{{COMMESSA_DESCRIZIONE}}</td></tr>
+      <tr><th>Responsabile</th><td>{{COMMESSA_RESPONSABILE}}</td></tr>
+      <tr><th>Luogo</th><td>{{COMMESSA_LUOGO}}</td></tr>
+      <tr><th>Data inizio</th><td>{{COMMESSA_DATA_INIZIO}}</td></tr>
+      <tr><th>Data fine</th><td>{{COMMESSA_DATA_FINE}}</td></tr>
+      <tr><th>Stato</th><td>{{COMMESSA_STATO}}</td></tr>
+    </tbody>
+  </table>
+  <h2>Tracciabilità: materiale → lotto → componente → commessa</h2>
+  <p style="font-size:9pt;margin:0 0 8px;">Record: <strong>{{TOTAL_RECORDS}}</strong></p>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Materiale (codice)</th>
+        <th>Lotto</th>
+        <th>Componente / descrizione</th>
+        <th>Posizione</th>
+        <th>Qtà</th>
+        <th>Commessa</th>
+        <th>Rif. disegno</th>
+      </tr>
+    </thead>
+    <tbody>{{TRACCIABILITA_ROWS}}</tbody>
+  </table>
+</body>
+</html>

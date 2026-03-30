@@ -1,0 +1,327 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Auth (esistente) ---
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  passwordHash     String
+  firstName        String
+  lastName         String
+  role             Role     @default(USER)
+  refreshTokenHash String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// --- EN 1090: enumerazioni ---
+
+enum CommessaStato {
+  BOZZA
+  IN_CORSO
+  SOSPESA
+  CHIUSA
+}
+
+enum DocumentoStatoApprovazione {
+  BOZZA
+  IN_REVISIONE
+  APPROVATO
+  RESPINTO
+}
+
+enum ChecklistStato {
+  APERTA
+  IN_CORSO
+  COMPLETATA
+  ARCHIVIATA
+}
+
+enum ChecklistEsito {
+  CONFORME
+  NON_CONFORME
+  PARZIALE
+  NON_APPLICABILE
+}
+
+enum NcTipo {
+  INTERNA
+  ESTERNA
+  FORNITORE
+  PROCESSO
+}
+
+enum NcGravita {
+  BASSA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum NcStato {
+  APERTA
+  IN_ANALISI
+  IN_CORSO_AZIONI
+  CHIUSA
+}
+
+enum AuditEsito {
+  CONFORME
+  NON_CONFORME
+  PARZIALE
+}
+
+enum PianoControlloEsito {
+  IN_ATTESA
+  CONFORME
+  NON_CONFORME
+  NON_APPLICABILE
+}
+
+// --- Commesse (hub relazioni EN 1090) ---
+
+model Commessa {
+  id            String        @id @default(uuid())
+  codice        String        @unique
+  /// Titolo o nome commerciale dell’ordine
+  titolo        String?
+  cliente       String
+  descrizione   String?
+  /// Referente interno / responsabile di commessa
+  responsabile  String?
+  /// Cantiere o luogo di esecuzione (opzionale)
+  luogo         String?
+  note          String?       @db.Text
+  dataInizio    DateTime?
+  dataFine      DateTime?
+  stato         CommessaStato @default(BOZZA)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  materiali      Materiale[]
+  documenti      Documento[]
+  pianiControllo PianoControllo[]
+  nonConformita  NonConformita[]
+  audits         Audit[]
+  tracciabilita  Tracciabilita[]
+  wps            Wps[]
+  wpqr           Wpqr[]
+  checklists     Checklist[]
+}
+
+// --- Materiali (tracciabilità verso commessa) ---
+
+model Materiale {
+  id                String    @id @default(uuid())
+  codice            String
+  descrizione       String
+  /// Tipologia (es. acciaio strutturale, laminati…)
+  tipo              String?
+  /// Norma di riferimento (es. EN 10025-2)
+  norma             String?
+  /// Riferimento testuale al certificato 3.1 / collaudo
+  certificato31     String?
+  /// Collegamento opzionale al PDF caricato in Documenti (stessa commessa)
+  certificatoDocumentoId String?
+  certificatoDocumento   Documento? @relation("MaterialeCertificato", fields: [certificatoDocumentoId], references: [id], onDelete: SetNull)
+  lotto             String?
+  fornitore         String?
+  dataCarico        DateTime?
+  commessaId        String
+  commessa          Commessa  @relation(fields: [commessaId], references: [id], onDelete: Cascade)
+  tracciabilita     Tracciabilita[]
+  /// WPS che referenziano questo materiale come base (stessa commessa consigliata)
+  wpsMaterialeBase  Wps[]         @relation("WpsMateriale")
+
+  @@unique([commessaId, codice])
+  @@index([commessaId])
+  @@index([certificatoDocumentoId])
+}
+
+// --- Documenti ---
+
+model Documento {
+  id                String                     @id @default(uuid())
+  nome              String
+  tipo              String
+  versione          String
+  percorsoFile      String
+  statoApprovazione DocumentoStatoApprovazione @default(BOZZA)
+  commessaId        String
+  commessa          Commessa                   @relation(fields: [commessaId], references: [id], onDelete: Cascade)
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  materialiCertificato Materiale[]             @relation("MaterialeCertificato")
+
+  @@index([commessaId])
+}
+
+// --- Checklist (elementi: JSON array) ---
+
+model Checklist {
+  id                 String          @id @default(uuid())
+  titolo             String
+  /// Tipologia (es. fabbricazione, saldatura) — legacy UI
+  categoria          String
+  /// Fase di lavorazione / controllo
+  fase               String?
+  dataCompilazione   DateTime?       @default(now())
+  esito              ChecklistEsito?
+  note               String?         @db.Text
+  operatore          String?
+  /// Allegati: JSON array di `{ documentoId?, nome?, note? }`
+  allegati           Json?
+  stato              ChecklistStato
+  /// Punti controllo: `[{ id, descrizione, completato?, risposta?, note? }]`
+  elementi           Json
+  commessaId         String?
+  commessa           Commessa?       @relation(fields: [commessaId], references: [id], onDelete: SetNull)
+
+  @@index([commessaId])
+}
+
+// --- WPS / WPQR ---
+
+model Wps {
+  id            String     @id @default(uuid())
+  codice        String     @unique
+  descrizione   String?
+  /// Processo (es. 111, 135 — MAG / TIG)
+  processo      String
+  spessore      String?
+  /// Testo libero se non si usa il materiale collegato
+  materialeBase String?
+  scadenza      DateTime?
+  note          String?    @db.Text
+  commessaId    String?
+  commessa      Commessa?  @relation(fields: [commessaId], references: [id], onDelete: SetNull)
+  /// Materiale di riferimento (deve appartenere alla stessa commessa se commessaId è valorizzato)
+  materialeId   String?
+  materiale     Materiale? @relation("WpsMateriale", fields: [materialeId], references: [id], onDelete: SetNull)
+  wpqr          Wpqr[]
+
+  @@index([commessaId])
+  @@index([materialeId])
+}
+
+model Wpqr {
+  id            String     @id @default(uuid())
+  codice        String
+  /// Nome saldatore (testo); opzionale collegamento a anagrafica qualifiche
+  saldatore     String
+  wpsId         String
+  wps           Wps        @relation(fields: [wpsId], references: [id], onDelete: Restrict)
+  dataQualifica DateTime
+  scadenza      DateTime?
+  note          String?    @db.Text
+  commessaId    String?
+  commessa      Commessa?  @relation(fields: [commessaId], references: [id], onDelete: SetNull)
+  qualificaId   String?
+  qualifica     Qualifica? @relation(fields: [qualificaId], references: [id], onDelete: SetNull)
+
+  @@index([wpsId])
+  @@index([commessaId])
+  @@index([qualificaId])
+}
+
+// --- Qualifiche personale ---
+
+model Qualifica {
+  id        String   @id @default(uuid())
+  nome      String
+  ruolo     String
+  scadenza  DateTime?
+  documento String?
+  wpqr      Wpqr[]
+}
+
+// --- Attrezzature / strumenti ---
+
+model Attrezzatura {
+  id               String    @id @default(uuid())
+  nome             String
+  matricola        String    @unique
+  tipo             String
+  dataManutenzione DateTime?
+  dataTaratura     DateTime?
+  scadenza         DateTime?
+}
+
+// --- Non conformità ---
+
+model NonConformita {
+  id               String    @id @default(uuid())
+  titolo           String
+  descrizione      String
+  tipo             NcTipo
+  gravita          NcGravita
+  stato            NcStato
+  azioniCorrettive String?
+  dataApertura     DateTime  @default(now())
+  dataChiusura     DateTime?
+  commessaId       String
+  commessa         Commessa  @relation(fields: [commessaId], references: [id], onDelete: Cascade)
+
+  @@index([commessaId])
+}
+
+// --- Audit (ispezioni / verifiche) ---
+
+model Audit {
+  id           String     @id @default(uuid())
+  titolo       String
+  data         DateTime
+  auditor      String
+  esito        AuditEsito
+  note         String?
+  commessaId   String
+  commessa     Commessa   @relation(fields: [commessaId], references: [id], onDelete: Cascade)
+
+  @@index([commessaId])
+}
+
+// --- Piani di controllo ---
+
+model PianoControllo {
+  id                 String               @id @default(uuid())
+  commessaId         String
+  fase               String
+  controlliRichiesti Json
+  esito              PianoControlloEsito
+  commessa           Commessa             @relation(fields: [commessaId], references: [id], onDelete: Cascade)
+
+  @@index([commessaId])
+}
+
+// --- Tracciabilità (legame materiale–commessa–posizione / componente) ---
+
+model Tracciabilita {
+  id                    String    @id @default(uuid())
+  materialeId           String
+  materiale             Materiale @relation(fields: [materialeId], references: [id], onDelete: Cascade)
+  commessaId            String
+  commessa              Commessa  @relation(fields: [commessaId], references: [id], onDelete: Cascade)
+  /// Posizione o collocazione sul cantiere / nel montaggio
+  posizione             String
+  quantita              Decimal   @db.Decimal(18, 4)
+  /// Componente o parte realizzata con il materiale (es. trave, piastra)
+  descrizioneComponente String?
+  /// Riferimento a tavola / distinta di taglio
+  riferimentoDisegno    String?
+  note                  String?   @db.Text
+
+  @@index([materialeId])
+  @@index([commessaId])
+}

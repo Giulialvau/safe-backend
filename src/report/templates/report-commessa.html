@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Report Commessa — {{COMMESSA_CODICE}}</title>
+  <style>
+    @page { size: A4 portrait; margin: 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      color: #222;
+      line-height: 1.45;
+      margin: 0;
+    }
+    .doc-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 2px solid #1e3a5f;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .logo-placeholder {
+      width: 130px;
+      height: 52px;
+      border: 1px dashed #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8pt;
+      color: #666;
+      background: #f8f9fa;
+    }
+    .doc-header-right { text-align: right; font-size: 8pt; color: #555; }
+    h1 {
+      font-size: 17pt;
+      color: #1e3a5f;
+      margin: 0 0 4px;
+    }
+    .subtitle { font-size: 10pt; color: #555; margin: 0 0 16px; }
+    h2 {
+      font-size: 12pt;
+      color: #1e3a5f;
+      margin: 20px 0 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #ccc;
+    }
+    h2:first-of-type { margin-top: 0; }
+    table.data {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 12px;
+    }
+    table.data th,
+    table.data td {
+      border: 1px solid #bbb;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.data th { background: #eef2f6; font-weight: bold; width: 32%; }
+    table.grid {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 12px;
+      font-size: 8.5pt;
+    }
+    table.grid th,
+    table.grid td {
+      border: 1px solid #bbb;
+      padding: 4px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.grid th { background: #eef2f6; }
+    .chart-wrap {
+      margin: 12px 0 16px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      background: #fafafa;
+      overflow: hidden;
+    }
+    .nc-badge { font-size: 9pt; margin: 0 0 8px; }
+    .note { font-size: 8.5pt; color: #555; margin-top: 8px; }
+    .section-break { page-break-before: always; }
+  </style>
+</head>
+<body>
+  <header class="doc-header">
+    <div class="logo-placeholder">Logo aziendale</div>
+    <div class="doc-header-right">
+      Report Commessa EN 1090<br />
+      Generazione: {{GENERATO_IL}}
+    </div>
+  </header>
+  <h1>Report Commessa</h1>
+  <p class="subtitle">Sintesi professionale — Commessa <strong>{{COMMESSA_CODICE}}</strong> · {{COMMESSA_CLIENTE}}</p>
+
+  <h2>1. Dati commessa</h2>
+  <table class="data">
+    <tbody>
+      <tr><th>Codice</th><td>{{COMMESSA_CODICE}}</td></tr>
+      <tr><th>Cliente</th><td>{{COMMESSA_CLIENTE}}</td></tr>
+      <tr><th>Titolo</th><td>{{COMMESSA_TITOLO}}</td></tr>
+      <tr><th>Descrizione</th><td>{{COMMESSA_DESCRIZIONE}}</td></tr>
+      <tr><th>Responsabile</th><td>{{COMMESSA_RESPONSABILE}}</td></tr>
+      <tr><th>Luogo</th><td>{{COMMESSA_LUOGO}}</td></tr>
+      <tr><th>Data inizio / fine</th><td>{{COMMESSA_DATA_INIZIO}} — {{COMMESSA_DATA_FINE}}</td></tr>
+      <tr><th>Stato</th><td>{{COMMESSA_STATO}}</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2. Stato avanzamento EN 1090 (workflow)</h2>
+  <p class="note">Criteri allineati alla dashboard commessa: fasi con requisiti minimi e conteggi.</p>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Fase</th>
+        <th>Completata</th>
+        <th>Dettaglio</th>
+      </tr>
+    </thead>
+    <tbody>{{WORKFLOW_ROWS}}</tbody>
+  </table>
+  <p class="note">Completamento globale stimato: <strong>{{WORKFLOW_PCT}}%</strong> ({{WORKFLOW_DONE}}/{{WORKFLOW_TOTAL}} fasi)</p>
+  <div class="chart-wrap">{{WORKFLOW_CHART_SVG}}</div>
+
+  <div class="section-break"></div>
+  <h2>3. Materiali principali</h2>
+  <p class="note">Estratto fino a 15 lotti (ordine codice).</p>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Codice</th>
+        <th>Descrizione</th>
+        <th>Lotto</th>
+        <th>Fornitore</th>
+        <th>Norma</th>
+        <th>Cert. doc.</th>
+      </tr>
+    </thead>
+    <tbody>{{MATERIALI_ROWS}}</tbody>
+  </table>
+
+  <h2>4. Tracciabilità (sintesi)</h2>
+  <p class="note">Estratto fino a 20 record.</p>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Materiale</th>
+        <th>Lotto</th>
+        <th>Componente</th>
+        <th>Posizione</th>
+        <th>Qtà</th>
+      </tr>
+    </thead>
+    <tbody>{{TRACCIABILITA_ROWS}}</tbody>
+  </table>
+
+  <div class="section-break"></div>
+  <h2>5. Non conformità</h2>
+  <p class="nc-badge">Aperte: <strong>{{NC_APERTE}}</strong> · Chiuse: <strong>{{NC_CHIUSE}}</strong> · Totale: <strong>{{NC_TOTAL}}</strong></p>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Titolo</th>
+        <th>Stato</th>
+        <th>Gravità</th>
+        <th>Apertura</th>
+      </tr>
+    </thead>
+    <tbody>{{NC_ROWS}}</tbody>
+  </table>
+
+  <h2>6. Audit FPC</h2>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Titolo</th>
+        <th>Data</th>
+        <th>Auditor</th>
+        <th>Esito</th>
+        <th>Note</th>
+      </tr>
+    </thead>
+    <tbody>{{AUDIT_ROWS}}</tbody>
+  </table>
+
+  <h2>7. Checklist principali</h2>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Titolo</th>
+        <th>Stato</th>
+        <th>Esito</th>
+        <th>Categoria / fase</th>
+        <th>Note</th>
+      </tr>
+    </thead>
+    <tbody>{{CHECKLIST_ROWS}}</tbody>
+  </table>
+
+  <div class="section-break"></div>
+  <h2>8. Qualifiche saldatori (anagrafica)</h2>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Ruolo</th>
+        <th>Scadenza</th>
+        <th>Documento</th>
+      </tr>
+    </thead>
+    <tbody>{{QUALIFICHE_ROWS}}</tbody>
+  </table>
+
+  <h2>9. WPS</h2>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Codice</th>
+        <th>Processo</th>
+        <th>Materiale base</th>
+        <th>Scadenza</th>
+      </tr>
+    </thead>
+    <tbody>{{WPS_ROWS}}</tbody>
+  </table>
+
+  <h2>10. WPQR</h2>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Codice</th>
+        <th>Saldatore</th>
+        <th>WPS</th>
+        <th>Data qualifica</th>
+        <th>Scadenza</th>
+        <th>Qualifica</th>
+      </tr>
+    </thead>
+    <tbody>{{WPQR_ROWS}}</tbody>
+  </table>
+
+  <h2>11. Conteggi documentali</h2>
+  <table class="data">
+    <tbody>
+      <tr><th>Materiali</th><td>{{COUNT_MATERIALI}}</td></tr>
+      <tr><th>Documenti</th><td>{{COUNT_DOCUMENTI}}</td></tr>
+      <tr><th>Tracciabilità</th><td>{{COUNT_TRACCIABILITA}}</td></tr>
+      <tr><th>Checklist</th><td>{{COUNT_CHECKLIST}}</td></tr>
+      <tr><th>Non conformità</th><td>{{COUNT_NC}}</td></tr>
+      <tr><th>Audit</th><td>{{COUNT_AUDIT}}</td></tr>
+      <tr><th>WPS</th><td>{{COUNT_WPS}}</td></tr>
+      <tr><th>WPQR</th><td>{{COUNT_WPQR}}</td></tr>
+      <tr><th>Piani di controllo</th><td>{{COUNT_PIANI}}</td></tr>
+    </tbody>
+  </table>
+  <p class="note">{{REPORT_FOOTER_NOTE}}</p>
+</body>
+</html>
